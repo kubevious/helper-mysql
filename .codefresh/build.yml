@@ -57,11 +57,13 @@ steps:
         image: mysql:8.0.19
         timeoutSeconds: 90
         volumes:
-          - ./mysql:/my-init-script
+          - '${{CF_VOLUME_NAME}}:${{CF_VOLUME_PATH}}'
         commands:
           - "mysql --host=mysql --user=root --password= sample-db -e \"show databases;\""    
           # - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
-          - ls -la /my-init-script
+          - ls -la ${{CF_VOLUME_NAME}}
+          - ls -la ${{clone}}
+          - ls -la ${{clone}}/mysql/
           # - "mysql --host=mysql --user=root --password= sample-db < /my-init-script/init.sql"
           # - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
 
