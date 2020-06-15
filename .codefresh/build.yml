@@ -28,6 +28,7 @@ steps:
     title: Run Unit Tests
     stage: test
     image: 'kubevious/node-builder:12'
+    working_directory: "${{main_clone}}"
     environment:
       - "MYSQL_HOST=mysql"
       - "MYSQL_PORT=3306"
