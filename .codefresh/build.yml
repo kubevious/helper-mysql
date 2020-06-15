@@ -28,7 +28,6 @@ steps:
     title: Run Unit Tests
     stage: test
     image: 'kubevious/node-builder:12'
-    working_directory: ${{clone}}
     environment:
       - "MYSQL_HOST=mysql"
       - "MYSQL_PORT=3306"
@@ -36,6 +35,8 @@ steps:
       - "MYSQL_USER=root"
       - "MYSQL_PASS="
     commands:
+      - pwd
+      - ls -la
       - npm test
     services:
       composition:
