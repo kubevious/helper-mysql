@@ -20,6 +20,7 @@ steps:
     image: 'kubevious/node-builder:12'
     working_directory: "${{clone}}"
     commands:
+      - ls -la ./mysql
       - npm install
       - npm install --only=dev
       - mkdir -p /codefresh/volume/runtime-data
@@ -28,7 +29,7 @@ steps:
     title: Run Unit Tests
     stage: test
     image: 'kubevious/node-builder:12'
-    working_directory: "${{main_clone}}"
+    working_directory: "${{clone}}"
     environment:
       - "MYSQL_HOST=mysql"
       - "MYSQL_PORT=3306"
@@ -59,9 +60,9 @@ steps:
           - ./mysql:/my-init-script
         commands:
           - "mysql --host=mysql --user=root --password= sample-db -e \"show databases;\""    
-          - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
+          # - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
           - ls -la /my-init-script
-          - "mysql --host=mysql --user=root --password= sample-db < /my-init-script/init.sql"
-          - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
+          # - "mysql --host=mysql --user=root --password= sample-db < /my-init-script/init.sql"
+          # - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
 
           
