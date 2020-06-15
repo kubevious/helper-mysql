@@ -50,23 +50,18 @@ steps:
             - "MYSQL_DATABASE=sample-db"
             - "MYSQL_ALLOW_EMPTY_PASSWORD=yes"
           volumes:
-            # - /codefresh/volume/runtime-data:/var/lib/mysql
-            - ./${{CF_REPO_NAME}}/mysql:/docker-entrypoint-initdb.d
+            # - ./${{CF_REPO_NAME}}/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
           command: --default-authentication-plugin=mysql_native_password
       readiness:
         image: mysql:8.0.19
         timeoutSeconds: 90
         volumes:
-          # - '${{CF_VOLUME_NAME}}:${{CF_VOLUME_PATH}}'
           - './${{CF_REPO_NAME}}/mysql:/my-init-script'
         commands:
           - "mysql --host=mysql --user=root --password= sample-db -e \"show databases;\""    
           - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
-          # - ls -la ${{CF_VOLUME_NAME}}
-          # - ls -la ${{clone}}
-          # - ls -la ${{clone}}/mysql/
           - ls -la /my-init-script
-          # - "mysql --host=mysql --user=root --password= sample-db < /my-init-script/init.sql"
-          # - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
+          - "mysql --host=mysql --user=root --password= sample-db < /my-init-script/init.sql"
+          - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
 
           
