@@ -23,6 +23,7 @@ steps:
       - npm install
       - npm install --only=dev
       - mkdir -p /codefresh/volume/runtime-data
+      - cat ./mysql/db-init.sql
 
   run_unit_test:
     title: Run Unit Tests
