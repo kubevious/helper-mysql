@@ -2,7 +2,7 @@ USE `sample-db`;
 SET NAMES utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `contacts` (
-  `id` BINARY(16) NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(255) NOT NULL,
   `email` VARCHAR(255) NOT NULL,
   PRIMARY KEY (`id`)

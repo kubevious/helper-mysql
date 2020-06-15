@@ -25,7 +25,7 @@ describe('mysql-driver', function() {
         });
     });
 
-    it('execute', function() {
+    it('execute-sql-1', function() {
         var mysqlDriver = new MySqlDriver(logger, true);
 
         mysqlDriver.connect();
@@ -37,6 +37,35 @@ describe('mysql-driver', function() {
         .then(result => {
             (result).should.be.an.Array();
             (result.length > 1).should.be.true();
+        })
+        .then(() => {
+            return mysqlDriver.close();
+        });
+    });
+
+    it('execute-sql-2', function() {
+        var mysqlDriver = new MySqlDriver(logger, true);
+
+        mysqlDriver.connect();
+
+        return mysqlDriver.waitConnect()
+        .then(() => {
+            return mysqlDriver.executeSql("DELETE FROM contacts;");
+        })
+        .then(() => {
+            return mysqlDriver.executeSql("INSERT INTO contacts(name, email) VALUES('John Doe', 'john@doe.co');");
+        })
+        .then(result => {
+            logger.info("Result: ", result);
+        })
+        .then(() => {
+            return mysqlDriver.executeSql("SELECT * FROM contacts;");
+        })
+        .then(result => {
+            logger.info("Result: ", result);
+            (result).should.be.an.Array();
+            (result.length == 1).should.be.true();
+            (result[0].name).should.be.equal('John Doe');
         })
         .then(() => {
             return mysqlDriver.close();
