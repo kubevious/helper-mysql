@@ -55,3 +55,5 @@ steps:
         timeoutSeconds: 90
         commands:
           - "mysql --host=mysql --user=root --password= sample-db -e \"show databases;\""    
+          - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
+          
