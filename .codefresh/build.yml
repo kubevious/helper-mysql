@@ -49,11 +49,18 @@ steps:
           volumes:
             # - /codefresh/volume/runtime-data:/var/lib/mysql
             - ./mysql:/docker-entrypoint-initdb.d
-          command: "--default-authentication-plugin=mysql_native_password"
+          commands:
+            - mysqld --default-authentication-plugin=mysql_native_password
       readiness:
         image: mysql:8.0.19
         timeoutSeconds: 90
+        volumes:
+          - ./mysql:/my-init-script
         commands:
           - "mysql --host=mysql --user=root --password= sample-db -e \"show databases;\""    
           - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
+          - ls -la /my-init-script
+          - "mysql --host=mysql --user=root --password= sample-db < /my-init-script/init.sql"
+          - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
+
           
