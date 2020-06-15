@@ -49,7 +49,7 @@ steps:
             - "MYSQL_ALLOW_EMPTY_PASSWORD=yes"
           volumes:
             # - /codefresh/volume/runtime-data:/var/lib/mysql
-            - ./mysql/db-init.sql:/docker-entrypoint-initdb.d/init.sql
+            - ./mysql:/docker-entrypoint-initdb.d
           command: "--default-authentication-plugin=mysql_native_password"
       readiness:
         image: mysql:8.0.19
