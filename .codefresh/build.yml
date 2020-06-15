@@ -46,11 +46,11 @@ steps:
             - "MYSQL_DATABASE=sample-db"
             - "MYSQL_ALLOW_EMPTY_PASSWORD=yes"
           volumes:
-            - ./mysql/db-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+            - /codefresh/volume/runtime-data:/var/lib/mysql:rw
+            - ${{clone}}/mysql/db-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
           command: "--default-authentication-plugin=mysql_native_password"
-            # - mysqld --default-authentication-plugin=mysql_native_password
       readiness:
         image: mysql:8.0.19
-        timeoutSeconds: 30
+        timeoutSeconds: 90
         commands:
           - "mysql --host=mysql --user=root --password= sample-db -e \"show databases;\""    
