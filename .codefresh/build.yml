@@ -22,6 +22,7 @@ steps:
     commands:
       - npm install
       - npm install --only=dev
+      - mkdir -p /codefresh/volume/runtime-data
 
   run_unit_test:
     title: Run Unit Tests
