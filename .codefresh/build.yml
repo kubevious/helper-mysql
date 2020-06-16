@@ -59,9 +59,6 @@ steps:
           - './${{CF_REPO_NAME}}/mysql:/my-init-script'
         commands:
           - "mysql --host=mysql --user=root --password= sample-db -e \"show databases;\""    
-          # - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
-          # - "mysql --host=mysql --user=root --password= sample-db -e \"select * from contacts;\""    
-          # - ls -la /my-init-script
           - "mysql --host=mysql --user=root --password= sample-db < /my-init-script/init.sql"
           - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
 
