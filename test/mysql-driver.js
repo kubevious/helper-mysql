@@ -3,16 +3,18 @@ const _ = require('the-lodash');
 const logger = require('the-logger').setup('test', { pretty: true });
 const MySqlDriver = require('../');
 
+function buildTestSuite(isDebug) {
+
 describe('mysql-driver', function() {
 
     it('constructor', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
         mysqlDriver.close();
     });
 
 
     it('connect', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
@@ -28,7 +30,7 @@ describe('mysql-driver', function() {
 
 
     it('execute-sql-1', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
@@ -47,7 +49,7 @@ describe('mysql-driver', function() {
 
 
     it('execute-sql-2', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
@@ -76,7 +78,7 @@ describe('mysql-driver', function() {
     });
 
     it('execute-sql-error', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
@@ -98,7 +100,7 @@ describe('mysql-driver', function() {
     });
 
     it('prepare-statement-after-connect', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
@@ -133,7 +135,7 @@ describe('mysql-driver', function() {
     });
 
     it('prepare-statement-after-connect-error', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
@@ -159,7 +161,7 @@ describe('mysql-driver', function() {
     });
 
     it('prepare-statement-after-connect-error-2', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
@@ -194,7 +196,7 @@ describe('mysql-driver', function() {
 
 
     it('prepare-statement-no-connect-error', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         var selectStatement = mysqlDriver.statement("SELECT * FROM contacts;");
 
@@ -215,7 +217,7 @@ describe('mysql-driver', function() {
 
 
     it('prepare-statement-before-connect', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         var deleteStatement = mysqlDriver.statement("DELETE FROM contacts;");
         var insertStatement = mysqlDriver.statement("INSERT INTO contacts(`name`, `email`) VALUES(?, ?);");
@@ -249,7 +251,7 @@ describe('mysql-driver', function() {
 
 
     it('prepare-statement-before-connect-error', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         var selectStatement = mysqlDriver.statement("SELECT * FROM contactZ;");
             
@@ -274,7 +276,7 @@ describe('mysql-driver', function() {
 
 
     it('prepare-reconnect', function() {
-        var mysqlDriver = new MySqlDriver(logger, true);
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         var deleteStatement = mysqlDriver.statement("DELETE FROM contacts;");
         var insertStatement = mysqlDriver.statement("INSERT INTO contacts(`name`, `email`) VALUES(?, ?);");
@@ -331,4 +333,57 @@ describe('mysql-driver', function() {
     });
 
 
+    it('some-cleanup', function() {
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+
+        mysqlDriver.connect();
+
+        return mysqlDriver.waitConnect()
+        .then(() => {
+            return mysqlDriver.executeSql("DROP TABLE IF EXISTS sync_test;");
+        })
+        .then(() => {
+            return mysqlDriver.close();
+        });
+    });
+
+
+    it('on-migrate', function() {
+        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+
+        mysqlDriver.onMigrate(() => {
+            return mysqlDriver.executeSql(
+                "CREATE TABLE `sync_test` (" +
+                    "`id` int unsigned NOT NULL AUTO_INCREMENT," +
+                    "`name` varchar(128) NOT NULL," +
+                    "`msg` TEXT NOT NULL," +
+                    "PRIMARY KEY (`id`)" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=latin1;");
+        })
+
+        mysqlDriver.connect();
+
+        return mysqlDriver.waitConnect()
+        .then(() => {
+            return mysqlDriver.executeSql("SELECT * FROM sync_test;");
+        })
+        .then(result => {
+            (result).should.be.an.Array();
+            (result.length).should.be.equal(0);
+        })
+        .then(() => {
+            return mysqlDriver.executeSql("DROP TABLE sync_test;");
+        })
+        .then(() => {
+            return mysqlDriver.close();
+        });
+    });
+
+
+
 });
+
+}
+
+buildTestSuite(true);
+buildTestSuite(false);
