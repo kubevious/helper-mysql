@@ -1,4 +1,4 @@
-# MySQL Helper Module
+# MySQL Client Module
 
 ## Running Locally
 ```sh
