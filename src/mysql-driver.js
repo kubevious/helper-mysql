@@ -4,7 +4,7 @@ const mysql = require('mysql2');
 const events = require('events');
 const HandledError = require('./handled-error');
 const MySqlStatement = require('./mysql-statement');
-const MySqlTableSynchronizer = require('./mysql-table-synchronizer');
+// const MySqlTableSynchronizer = require('./mysql-table-synchronizer');
 
 class MySqlDriver
 {
@@ -132,13 +132,13 @@ class MySqlDriver
         });
     }
 
-    synchronizer(logger, table, filterFields, syncFields)
-    {
-        var synchronizer = new MySqlTableSynchronizer(logger, this, table, filterFields, syncFields);
-        return synchronizer;
-    }
+    // synchronizer(logger, table, filterFields, syncFields)
+    // {
+    //     var synchronizer = new MySqlTableSynchronizer(logger, this, table, filterFields, syncFields);
+    //     return synchronizer;
+    // }
 
-    _massageParams(params)
+    _massageParams(params? : any[]) : any[]
     {
         if (!params) {
             params = []

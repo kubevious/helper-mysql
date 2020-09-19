@@ -1,21 +1,25 @@
-const Promise = require('the-promise');
-const _ = require('the-lodash');
-const HandledError = require('./handled-error');
+import _ from 'the-lodash';
+import { Promise } from 'the-promise';
+import { ILogger } from 'the-logger'
+import { HandledError } from './handled-error'
 
-class MySqlStatement
+export class MySqlStatement
 {
-    constructor(driver, sql)
+    private _driver : any;
+    private logger : ILogger
+    private _sql : string;
+    private _statement : any;
+    private _isPreparing = false;
+    private _waiters : any[] = [];
+
+    constructor(logger : ILogger, driver : any, sql : string)
     {
         this._driver = driver;
-        this._logger = driver.logger;
+        this.logger = logger;
         this._sql = sql;
         this._statement = null;
         this._isPreparing = false;
         this._waiters = [];
-    }
-
-    get logger() {
-        return this._logger;
     }
 
     get isDebug() {
@@ -35,7 +39,7 @@ class MySqlStatement
         this._isPreparing = false;
     }
 
-    execute(params)
+    execute(params : any[])
     {
         this.logger.silly("[_execute] executing: %s", this._sql);
         if (this.isDebug) {
@@ -52,7 +56,7 @@ class MySqlStatement
             ;
     }
 
-    _execute(params)
+    _execute(params : any[]) : Promise<any>
     {
         if (!this.isConnected) {
             return Promise.reject('NotConnected.');
@@ -62,7 +66,7 @@ class MySqlStatement
             return Promise.reject('NotPrepared.');
         }
 
-        return new Promise((resolve, reject) => {
+        return Promise.construct<any>((resolve, reject) => {
             params = this._driver._massageParams(params);
 
             this._statement.execute(params, (err, results, fields) => {
@@ -71,7 +75,7 @@ class MySqlStatement
                     reject(err);
                     return;
                 }
-                if (this._isDebug) {
+                if (this.isDebug) {
                     this.logger.info("[_execute] DONE.", this._sql, results);
                 }
                 resolve(results);
@@ -79,7 +83,7 @@ class MySqlStatement
         });
     }
 
-    prepare()
+    prepare() : Promise<void>
     {
         if (this._statement) {
             return Promise.resolve();
@@ -94,7 +98,7 @@ class MySqlStatement
             });
         }
         this._isPreparing = true;
-        this._logger.info('[prepare] BEGIN: %s', this._sql);
+        this.logger.info('[prepare] BEGIN: %s', this._sql);
 
         return new Promise((resolve, reject) => {
             this._waiters.push({
@@ -126,7 +130,7 @@ class MySqlStatement
         });
     }
 
-    _handlePrepareError(message, error)
+    _handlePrepareError(message: string, error : any)
     {
         this.logger.error('[_handlePrepareError] failed to prepare statement. %s', message, this._sql, error);
         this._statement = null;
@@ -140,5 +144,3 @@ class MySqlStatement
 
 
 }
-
-module.exports = MySqlStatement;

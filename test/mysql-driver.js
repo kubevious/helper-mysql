@@ -1,7 +1,12 @@
-const should = require('should');
-const _ = require('the-lodash');
-const logger = require('the-logger').setup('test', { pretty: true });
-const MySqlDriver = require('../');
+import 'mocha';
+import should = require('should');
+import _ from 'the-lodash';
+
+import { setupLogger, LoggerOptions } from 'the-logger';
+const loggerOptions = new LoggerOptions().enableFile(false).pretty(true);
+const logger = setupLogger('test', loggerOptions);
+
+import { MySqlDriver } from '../src';
 
 function buildTestSuite(isDebug) {
 
@@ -386,4 +391,4 @@ describe('mysql-driver', function() {
 }
 
 buildTestSuite(true);
-buildTestSuite(false);
+// buildTestSuite(false);

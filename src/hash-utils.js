@@ -1,7 +1,7 @@
-const _ = require('the-lodash');
-const crypto = require('crypto');
+import _ from 'the-lodash';
+import crypto from 'crypto';
 
-module.exports.calculateObjectHash = function(obj)
+export function calculateObjectHash(obj)
 {
     if (_.isNullOrUndefined(obj)) {
         throw new Error('NO Object');
@@ -15,7 +15,7 @@ module.exports.calculateObjectHash = function(obj)
     return value;
 }
 
-module.exports.calculateObjectHashStr = function(obj)
+export function calculateObjectHashStr(obj)
 {
-    return module.exports.calculateObjectHash(obj).toString('hex');
+    return calculateObjectHash(obj).toString('hex');
 }
