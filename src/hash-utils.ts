@@ -1,7 +1,7 @@
 import _ from 'the-lodash';
 import crypto from 'crypto';
 
-export function calculateObjectHash(obj)
+export function calculateObjectHash(obj : any) : Buffer
 {
     if (_.isNullOrUndefined(obj)) {
         throw new Error('NO Object');
@@ -15,7 +15,7 @@ export function calculateObjectHash(obj)
     return value;
 }
 
-export function calculateObjectHashStr(obj)
+export function calculateObjectHashStr(obj : any) : string
 {
     return calculateObjectHash(obj).toString('hex');
 }

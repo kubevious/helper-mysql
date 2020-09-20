@@ -2,44 +2,42 @@ import _ from 'the-lodash';
 import { Promise } from 'the-promise';
 import { ILogger } from 'the-logger'
 import { HandledError } from './handled-error'
+import { MySqlDriver } from './mysql-driver'
 
 export class MySqlStatement
 {
-    private _driver : any;
+    private _driver : MySqlDriver;
     private logger : ILogger
     private _sql : string;
     private _statement : any;
     private _isPreparing = false;
     private _waiters : any[] = [];
 
-    constructor(logger : ILogger, driver : any, sql : string)
+    constructor(logger : ILogger, driver : MySqlDriver, sql : string)
     {
         this._driver = driver;
         this.logger = logger;
         this._sql = sql;
-        this._statement = null;
-        this._isPreparing = false;
-        this._waiters = [];
     }
 
-    get isDebug() {
-        return this._driver._isDebug;
+    get isDebug() : boolean {
+        return this._driver.isDebug;
     }
 
-    get isConnected() {
+    get isConnected() : boolean {
         return this._driver.isConnected;
     }
 
-    get isPrepared() {
+    get isPrepared() : boolean {
         return _.isNotNullOrUndefined(this._statement);
     }
 
     reset() {
-        this._statement = null;
+        this._statement = undefined;
         this._isPreparing = false;
     }
 
-    execute(params : any[])
+    execute(params? : any[]) : Promise<any[]>
     {
         this.logger.silly("[_execute] executing: %s", this._sql);
         if (this.isDebug) {
@@ -56,7 +54,7 @@ export class MySqlStatement
             ;
     }
 
-    _execute(params : any[]) : Promise<any>
+    _execute(params? : any[]) : Promise<any[]>
     {
         if (!this.isConnected) {
             return Promise.reject('NotConnected.');
@@ -66,10 +64,10 @@ export class MySqlStatement
             return Promise.reject('NotPrepared.');
         }
 
-        return Promise.construct<any>((resolve, reject) => {
-            params = this._driver._massageParams(params);
+        return Promise.construct<any[]>((resolve, reject) => {
+            let finalParams = this._driver._massageParams(params);
 
-            this._statement.execute(params, (err, results, fields) => {
+            this._statement.execute(finalParams, (err : any, results : any[], fields: any) => {
                 if (err) {
                     this.logger.error("[_execute] ERROR.", this._sql, err);
                     reject(err);
@@ -90,7 +88,7 @@ export class MySqlStatement
         }
 
         if (this._isPreparing) {
-            return new Promise((resolve, reject) => {
+            return Promise.construct<void>((resolve, reject) => {
                 this._waiters.push({
                     resolve,
                     reject
@@ -100,7 +98,7 @@ export class MySqlStatement
         this._isPreparing = true;
         this.logger.info('[prepare] BEGIN: %s', this._sql);
 
-        return new Promise((resolve, reject) => {
+        return Promise.construct<void>((resolve, reject) => {
             this._waiters.push({
                 resolve: resolve,
                 reject: reject
@@ -110,7 +108,7 @@ export class MySqlStatement
                 this._handlePrepareError('Not Connected', new HandledError("Not Connected"));
                 return; 
             }
-            this._driver._connection.prepare(this._sql, (err, statement) => {                
+            this._driver.connection.prepare(this._sql, (err : any, statement : any) => {                
                 if (err)
                 {
                     this._handlePrepareError('Failed to prepare', err);

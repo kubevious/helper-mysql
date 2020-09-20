@@ -8,7 +8,7 @@ const logger = setupLogger('test', loggerOptions);
 
 import { MySqlDriver } from '../src';
 
-function buildTestSuite(isDebug) {
+function buildTestSuite(isDebug : boolean) {
 
 describe('mysql-synchronizer', function() {
 
@@ -100,5 +100,5 @@ describe('mysql-synchronizer', function() {
 
 }
 
-// buildTestSuite(true);
-// buildTestSuite(false);
+buildTestSuite(true);
+buildTestSuite(false);

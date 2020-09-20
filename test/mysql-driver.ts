@@ -8,7 +8,7 @@ const logger = setupLogger('test', loggerOptions);
 
 import { MySqlDriver } from '../src';
 
-function buildTestSuite(isDebug) {
+function buildTestSuite(isDebug : boolean) {
 
 describe('mysql-driver', function() {
 
@@ -44,7 +44,7 @@ describe('mysql-driver', function() {
             return mysqlDriver.executeSql("SELECT table_name FROM information_schema.tables;");
         })
         .then(result => {
-            (result).should.be.an.Array();
+            should(result).be.an.Array();
             (result.length > 1).should.be.true();
         })
         .then(() => {
@@ -72,8 +72,7 @@ describe('mysql-driver', function() {
             return mysqlDriver.executeSql("SELECT * FROM contacts;");
         })
         .then(result => {
-            logger.info("Result: ", result);
-            (result).should.be.an.Array();
+            should(result).be.an.Array();
             (result.length == 1).should.be.true();
             (result[0].name).should.be.equal('John Doe');
         })
@@ -120,14 +119,14 @@ describe('mysql-driver', function() {
                 .then(() => selectStatement.execute())
                 .then(result => {
                     logger.info("Result: ", result);
-                    (result).should.be.an.Array();
+                    should(result).be.an.Array();
                     (result.length == 0).should.be.true();
                 })
                 .then(() => insertStatement.execute(['John Doe', 'john@doe.com']))
                 .then(() => selectStatement.execute())
                 .then(result => {
                     logger.info("Result: ", result);
-                    (result).should.be.an.Array();
+                    should(result).be.an.Array();
                     (result.length == 1).should.be.true();
                     (result[0].name).should.be.equal('John Doe');
                     (result[0].email).should.be.equal('john@doe.com');
@@ -235,14 +234,14 @@ describe('mysql-driver', function() {
                 .then(() => selectStatement.execute())
                 .then(result => {
                     logger.info("Result: ", result);
-                    (result).should.be.an.Array();
+                    should(result).be.an.Array();
                     (result.length == 0).should.be.true();
                 })
                 .then(() => insertStatement.execute(['John Doe', 'john@doe.com']))
                 .then(() => selectStatement.execute())
                 .then(result => {
                     logger.info("Result: ", result);
-                    (result).should.be.an.Array();
+                    should(result).be.an.Array();
                     (result.length == 1).should.be.true();
                     (result[0].name).should.be.equal('John Doe');
                     (result[0].email).should.be.equal('john@doe.com');
@@ -296,14 +295,14 @@ describe('mysql-driver', function() {
                 .then(() => selectStatement.execute())
                 .then(result => {
                     logger.info("Result: ", result);
-                    (result).should.be.an.Array();
+                    should(result).be.an.Array();
                     (result.length == 0).should.be.true();
                 })
                 .then(() => insertStatement.execute(['John Doe', 'john@doe.com']))
                 .then(() => selectStatement.execute())
                 .then(result => {
                     logger.info("Result: ", result);
-                    (result).should.be.an.Array();
+                    should(result).be.an.Array();
                     (result.length == 1).should.be.true();
                     (result[0].name).should.be.equal('John Doe');
                     (result[0].email).should.be.equal('john@doe.com');
@@ -324,7 +323,7 @@ describe('mysql-driver', function() {
                 .then(() => selectStatement.execute())
                 .then(result => {
                     logger.info("Result: ", result);
-                    (result).should.be.an.Array();
+                    should(result).be.an.Array();
                     (result.length == 1).should.be.true();
                     (result[0].name).should.be.equal('John Doe');
                     (result[0].email).should.be.equal('john@doe.com');
@@ -373,7 +372,7 @@ describe('mysql-driver', function() {
             return mysqlDriver.executeSql("SELECT * FROM sync_test;");
         })
         .then(result => {
-            (result).should.be.an.Array();
+            should(result).be.an.Array();
             (result.length).should.be.equal(0);
         })
         .then(() => {
@@ -391,4 +390,4 @@ describe('mysql-driver', function() {
 }
 
 buildTestSuite(true);
-// buildTestSuite(false);
+buildTestSuite(false);

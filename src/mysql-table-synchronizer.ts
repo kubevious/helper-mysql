@@ -1,11 +1,38 @@
-const _ = require('the-lodash');
-const HashUtils = require('./hash-utils');
+import _ from 'the-lodash';
+import { Promise } from 'the-promise';
+import { ILogger } from 'the-logger'
+import { calculateObjectHashStr } from './hash-utils'
+import { MySqlDriver, StatementInfo } from './mysql-driver'
+import { MySqlStatement } from './mysql-statement'
 
-class MySqlTableSynchronizer
+class DeltaAction 
 {
-    constructor(logger, driver, table, filterFields, syncFields)
+    public shouldCreate : boolean;
+    public item: object;
+
+    constructor(shouldCreate: boolean, item: object)
     {
-        this._logger = logger.sublogger('TableSynchronizer');
+        this.shouldCreate = shouldCreate;
+        this.item = item;
+    }
+}
+
+export class MySqlTableSynchronizer
+{
+    private _driver : MySqlDriver;
+    private logger : ILogger
+    private _table : string ;
+    private _filterFields : string[];
+    private _syncFields : string[];
+    private _skipDelete = false;
+
+    private _queryStatement? : MySqlStatement;
+    private _createStatement? : MySqlStatement;
+    private _deleteStatement? : MySqlStatement;
+
+    constructor(logger : ILogger, driver : MySqlDriver, table: string, filterFields : string[], syncFields : string[])
+    {
+        this.logger = logger;
         this._driver = driver;
         this._table = table;
         this._filterFields = filterFields || [];
@@ -15,10 +42,6 @@ class MySqlTableSynchronizer
         this._prepareQueryStatement();
         this._prepareCreateStatement();
         this._prepareDeleteStatement();
-    }
-
-    get logger() {
-        return this._logger;
     }
 
     markSkipDelete() {
@@ -51,7 +74,7 @@ class MySqlTableSynchronizer
 
     _prepareCreateStatement()
     {
-        var fields = [];
+        var fields : string[] = [];
         fields = _.concat(fields, this._filterFields);
         fields = _.concat(fields, this._syncFields);
         fields = fields.map(x => '`' + x + '`');
@@ -75,26 +98,26 @@ class MySqlTableSynchronizer
         this._deleteStatement = this._driver.statement(sql);
     }
 
-    execute(filterValues, items)
+    execute(filterValues : object, items : object[])
     {
         return this._queryCurrent(filterValues)
             .then(currentItems => {
 
-                var currentItemsDict = {}
+                var currentItemsDict : Record<string, any> = {}
                 for(var item of currentItems)
                 {
                     var id = item.id;
                     delete item.id;
-                    currentItemsDict[HashUtils.calculateObjectHashStr(item)] = {
+                    currentItemsDict[calculateObjectHashStr(item)] = {
                         id: id,
                         item: item
                     }
                 }
 
-                var targetItemsDict = {}
-                for(var item of items)
+                var targetItemsDict : Record<string, any> = {}
+                for(let item of items)
                 {
-                    targetItemsDict[HashUtils.calculateObjectHashStr(item)] = item;
+                    targetItemsDict[calculateObjectHashStr(item)] = item;
                 }
 
                 return this._productDelta(currentItemsDict, targetItemsDict);
@@ -104,13 +127,13 @@ class MySqlTableSynchronizer
             })
     }
 
-    _queryCurrent(filterValues)
+    _queryCurrent(filterValues : object)
     {
-        var params = this._filterFields.map(x => filterValues[x]);
-        return this._queryStatement.execute(params)
+        var params = this._filterFields.map(x => _.get(filterValues, x));
+        return this._queryStatement!.execute(params)
     }
 
-    _productDelta(currentItemsDict, targetItemsDict)
+    _productDelta(currentItemsDict : Record<string, any>, targetItemsDict : Record<string, any>) : DeltaAction[]
     {
         var delta = [];
 
@@ -118,10 +141,9 @@ class MySqlTableSynchronizer
             for(var h of _.keys(currentItemsDict))
             {
                 if (!targetItemsDict[h]) {
-                    delta.push({
-                        action: 'D',
-                        id: currentItemsDict[h].id
-                    });
+                    delta.push(
+                        new DeltaAction(false, currentItemsDict[h].id)
+                    );
                 }
             }
         }
@@ -129,32 +151,31 @@ class MySqlTableSynchronizer
         for(var h of _.keys(targetItemsDict))
         {
             if (!currentItemsDict[h]) {
-                delta.push({
-                    action: 'C',
-                    item: targetItemsDict[h]
-                });
+                delta.push(
+                    new DeltaAction(true, targetItemsDict[h])
+                );
             }
         }
 
         return delta;
     }
 
-    _executeDelta(delta)
+    _executeDelta(delta : DeltaAction[])
     {
-        var statements = delta.map(delta => {
+        let statements = delta.map(delta => {
             var statement = null;
             var params = null;
 
-            if (delta.action == 'C') {
+            if (delta.shouldCreate) {
                 statement = this._createStatement;
-                var params = this._filterFields.map(x => delta.item[x]);
-                params = _.concat(params, this._syncFields.map(x => delta.item[x]))
-            } else if (delta.action == 'D') {
+                params = this._filterFields.map(x => _.get(delta.item, x));
+                params = _.concat(params, this._syncFields.map(x => _.get(delta.item, x)))
+            } else {
                 statement = this._deleteStatement;
-                params = [delta.id];
+                params = [delta.item];
             }
 
-            return {
+            return <StatementInfo> {
                 statement, 
                 params
             }
@@ -162,7 +183,4 @@ class MySqlTableSynchronizer
 
         return this._driver.executeStatements(statements);
     }
-
 }
-
-module.exports = MySqlTableSynchronizer;

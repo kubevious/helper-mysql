@@ -31,6 +31,7 @@
   },
   "homepage": "https://github.com/kubevious/helpers#readme",
   "dependencies": {
+    "dotenv": "^8.2.0",
     "mysql2": "^2.1.0",
     "the-lodash": "^2.0.0",
     "the-logger": "^2.0.2",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^8.0.3",
+    "@types/mysql2": "github:types/mysql2",
     "@types/node": "^14.6.0",
     "@types/should": "^13.0.0",
     "@typescript-eslint/eslint-plugin": "^3.10.0",

@@ -1,19 +1,43 @@
-const Promise = require('the-promise');
-const _ = require('the-lodash');
-const mysql = require('mysql2');
-const events = require('events');
-const HandledError = require('./handled-error');
-const MySqlStatement = require('./mysql-statement');
-// const MySqlTableSynchronizer = require('./mysql-table-synchronizer');
+import _ from 'the-lodash';
+import { Promise, Resolvable } from 'the-promise';
+import { ILogger } from 'the-logger'
+import { HandledError } from './handled-error'
+import { createConnection, Connection } from 'mysql2';
+import { EventEmitter } from 'events'
+import { MySqlStatement } from './mysql-statement'
+import { MySqlTableSynchronizer } from './mysql-table-synchronizer'
 
-class MySqlDriver
+import dotenv from 'dotenv';
+dotenv.config();
+
+export interface StatementInfo 
 {
-    constructor(logger, params, isDebug)
+    statement : MySqlStatement;
+    params: any[];
+}
+
+export type ConnectCallback = ((driver : MySqlDriver) => Resolvable<any>);
+export type MigrateCallback = ((driver : MySqlDriver) => Promise<any>);
+export type TxCallback = ((driver : MySqlDriver) => Promise<any>);
+
+export class MySqlDriver
+{
+    private logger : ILogger
+    private _statements : Record<string, MySqlStatement> = {};
+    private _migrators : MigrateCallback[] = [];
+    private _connectEmitter = new EventEmitter();
+    private _isDebug = false;
+    private _isClosed = false;
+    private _isConnecting = false;
+    private _isConnected = false;
+    private _connection? : Connection;
+    private _mysqlConnectParams : any;
+
+    constructor(logger: ILogger, params : any, isDebug : boolean)
     {
-        this._logger = logger.sublogger("MySqlDriver");
+        this.logger = logger.sublogger("MySqlDriver");
         this._statements = {};
         this._migrators = [];
-        this._connectEmitter = new events.EventEmitter();
         this._isDebug = isDebug;
         this._isClosed = false;
 
@@ -30,12 +54,16 @@ class MySqlDriver
         });
     }
 
-    get logger() {
-        return this._logger;
+    get isConnected() : boolean{
+        return _.isNotNullOrUndefined(this._connection);
+    }
+    
+    get isDebug()  : boolean {
+        return this._isDebug;
     }
 
-    get isConnected() {
-        return _.isNotNullOrUndefined(this._connection);
+    get connection() : any {
+        return this._connection;
     }
 
     connect()
@@ -46,12 +74,12 @@ class MySqlDriver
 
     close()
     {
-        this._logger.info('[close]')
+        this.logger.info('[close]')
         this._isClosed = true;
         this._disconnect();
     }
 
-    onConnect(cb)
+    onConnect(cb : ConnectCallback)
     {
         if (this.isConnected) {
             this._triggerCallback(cb);
@@ -61,37 +89,37 @@ class MySqlDriver
         })
     }
 
-    waitConnect()
+    waitConnect() : Promise<void>
     {
         if (this._isConnected) {
             return Promise.resolve()
         }
 
-        return new Promise((resolve, reject) => {
+        return Promise.construct<void>((resolve, reject) => {
             this.onConnect(() => {
                 resolve();
             })
         });
     }
 
-    onMigrate(cb)
+    onMigrate(cb : MigrateCallback)
     {
         this._migrators.push(cb);
     }
 
-    statement(sql)
+    statement(sql : string) : MySqlStatement
     {
         if (sql in this._statements) {
             return this._statements[sql];
         }
-        var statement = new MySqlStatement(this, sql);
+        var statement = new MySqlStatement(this.logger, this, sql);
         this._statements[sql] = statement;
         return statement;
     }
 
-    prepareStatements()
+    prepareStatements() : Promise<void>
     {
-        this._logger.info('[prepareStatements] begin')
+        this.logger.info('[prepareStatements] begin')
         var statements = _.values(this._statements).filter(x => !x.isPrepared);
         return Promise.serial(statements, x => {
             return x.prepare()
@@ -100,13 +128,13 @@ class MySqlDriver
                 });
         })
         .then(() => {
-            this._logger.info('[prepareStatements] end')
+            this.logger.info('[prepareStatements] end')
         });
     }
 
-    executeSql(sql, params)
+    executeSql(sql : string, params? : any[]) : Promise<any[]>
     {
-        return new Promise((resolve, reject) => {
+        return Promise.construct<any[]>((resolve, reject) => {
             this.logger.silly("[executeSql] executing: %s", sql);
 
             if (this._isDebug) {
@@ -118,9 +146,9 @@ class MySqlDriver
                 return;
             }
             
-            params = this._massageParams(params);
+            let finalParams = this._massageParams(params);
 
-            this._connection.execute(sql, params, (err, results, fields) => {
+            this._connection.execute(sql, finalParams, (err: any, results: any[], fields) => {
                 if (err) {
                     this.logger.error("[executeSql] ERROR IN \"%s\". ", sql, err);
                     reject(err);
@@ -132,11 +160,11 @@ class MySqlDriver
         });
     }
 
-    // synchronizer(logger, table, filterFields, syncFields)
-    // {
-    //     var synchronizer = new MySqlTableSynchronizer(logger, this, table, filterFields, syncFields);
-    //     return synchronizer;
-    // }
+    synchronizer(logger : ILogger, table : string, filterFields : string[], syncFields : string[])
+    {
+        var synchronizer = new MySqlTableSynchronizer(logger, this, table, filterFields, syncFields);
+        return synchronizer;
+    }
 
     _massageParams(params? : any[]) : any[]
     {
@@ -159,7 +187,7 @@ class MySqlDriver
         return params;
     }
 
-    executeStatements(statementInfos)
+    executeStatements(statementInfos : StatementInfo[]) : Promise<any[]>
     {
         this.logger.info("[executeStatements] BEGIN. Count: %s", statementInfos.length);
 
@@ -178,12 +206,16 @@ class MySqlDriver
         }
     }
 
-    executeInTransaction(cb)
+    executeInTransaction(cb : TxCallback) : Promise<void>
     {
         this.logger.info("[executeInTransaction] BEGIN");
 
-        var connection = this._connection;
-        return new Promise((resolve, reject) => {
+        if (!this._connection) {
+            return Promise.reject(new HandledError("NOT CONNECTED"));
+        }
+
+        const connection = this._connection!;
+        return Promise.construct<void>((resolve, reject) => {
             this.logger.info("[executeInTransaction] TX Started.");
 
             if (!connection) {
@@ -191,7 +223,7 @@ class MySqlDriver
                 return;
             }
 
-            var rollback = (err) =>
+            var rollback = (err : any) =>
             {
                 this.logger.error("[executeInTransaction] Rolling Back.");
                 connection.rollback(() => {
@@ -200,7 +232,7 @@ class MySqlDriver
                 });
             }
 
-            connection.beginTransaction((err) => {
+            connection.beginTransaction((err : any) => {
                 if (err) { 
                     reject(err);
                     return;
@@ -209,7 +241,7 @@ class MySqlDriver
                 return Promise.resolve()
                     .then(() => cb(this))
                     .then(() => {
-                        connection.commit((err) => {
+                        connection.commit((err : any) => {
                             if (err) {
                                 this.logger.error("[executeInTransaction] TX Failed To Commit.");
                                 rollback(err);
@@ -242,15 +274,15 @@ class MySqlDriver
             }
             this._isConnecting = true;
     
-            var connection = mysql.createConnection(this._mysqlConnectParams);
+            let connection = createConnection(this._mysqlConnectParams);
 
-            connection.on('error', (err) => {
+            connection.on('error', (err : any) => {
                 this.logger.error('[_tryConnect] ON ERROR: %s', err.code);
                 connection.destroy();
                 this._disconnect();
             });
     
-            connection.connect((err) => {
+            connection.connect((err : any) => {
                 this._isConnecting = false;
     
                 if (err) {
@@ -263,7 +295,7 @@ class MySqlDriver
                 this._acceptConnection(connection);
             });
         }
-        catch(err)
+        catch(err : any)
         {
             this._isConnecting = false;
             this._disconnect();
@@ -272,11 +304,11 @@ class MySqlDriver
 
     _disconnect()
     {
-        this._logger.info("[_disconnect]");
+        this.logger.info("[_disconnect]");
         if (this._connection) {
             this._connection.destroy();
         }
-        this._connection = null;
+        this._connection = undefined;
         for(var x of _.values(this._statements))
         {
             x.reset();
@@ -284,7 +316,7 @@ class MySqlDriver
         this._tryReconnect();
     }
 
-    _acceptConnection(connection)
+    _acceptConnection(connection : Connection) : Promise<void>
     {
         this._connection = connection;
 
@@ -313,11 +345,11 @@ class MySqlDriver
         setTimeout(this._tryConnect.bind(this), 1000);
     }
 
-    _triggerCallback(cb)
+    _triggerCallback(cb : ConnectCallback)
     {
         try
         {
-            this._logger.info("[_triggerCallback]")
+            this.logger.info("[_triggerCallback]")
 
             setImmediate(() => {
                 try
@@ -326,20 +358,18 @@ class MySqlDriver
                     return Promise.resolve(res)
                         .then(() => {})
                         .catch(reason => {
-                            this._logger.error("[_triggerCallback] Promise Failure: ", reason)
+                            this.logger.error("[_triggerCallback] Promise Failure: ", reason)
                         })
                     }
                     catch(error)
                     {
-                        this._logger.error("[_triggerCallback] Exception: ", error);
+                        this.logger.error("[_triggerCallback] Exception: ", error);
                     }
             });
         }
-        catch(error)
+        catch(error: any)
         {
-            this._logger.error("[_triggerCallback] Exception2: ", error)
+            this.logger.error("[_triggerCallback] Exception2: ", error)
         }
     }
 }
-
-module.exports = MySqlDriver;
