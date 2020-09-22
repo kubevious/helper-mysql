@@ -3,6 +3,7 @@ import { Promise } from 'the-promise';
 import { ILogger } from 'the-logger'
 import { HandledError } from './handled-error'
 import { MySqlDriver } from './mysql-driver'
+import { massageParams } from './utils'
 
 export class MySqlStatement
 {
@@ -37,7 +38,7 @@ export class MySqlStatement
         this._isPreparing = false;
     }
 
-    execute(params? : any[]) : Promise<any[]>
+    execute(params? : any[]) : Promise<any>
     {
         this.logger.silly("[_execute] executing: %s", this._sql);
         if (this.isDebug) {
@@ -54,7 +55,7 @@ export class MySqlStatement
             ;
     }
 
-    _execute(params? : any[]) : Promise<any[]>
+    private _execute(params? : any[]) : Promise<any>
     {
         if (!this.isConnected) {
             return Promise.reject('NotConnected.');
@@ -64,10 +65,10 @@ export class MySqlStatement
             return Promise.reject('NotPrepared.');
         }
 
-        return Promise.construct<any[]>((resolve, reject) => {
-            let finalParams = this._driver._massageParams(params);
+        return Promise.construct<any>((resolve, reject) => {
+            let finalParams = massageParams(params);
 
-            this._statement.execute(finalParams, (err : any, results : any[], fields: any) => {
+            this._statement.execute(finalParams, (err : any, results : any, fields: any) => {
                 if (err) {
                     this.logger.error("[_execute] ERROR.", this._sql, err);
                     reject(err);
@@ -128,7 +129,7 @@ export class MySqlStatement
         });
     }
 
-    _handlePrepareError(message: string, error : any)
+    private _handlePrepareError(message: string, error : any)
     {
         this.logger.error('[_handlePrepareError] failed to prepare statement. %s', message, this._sql, error);
         this._statement = null;

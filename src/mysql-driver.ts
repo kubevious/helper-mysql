@@ -6,6 +6,7 @@ import { createConnection, Connection } from 'mysql2';
 import { EventEmitter } from 'events'
 import { MySqlStatement } from './mysql-statement'
 import { MySqlTableSynchronizer } from './mysql-table-synchronizer'
+import { massageParams } from './utils'
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -66,13 +67,13 @@ export class MySqlDriver
         return this._connection;
     }
 
-    connect()
+    connect() : void
     {
         this._isClosed = false;
         return this._tryConnect();
     }
 
-    close()
+    close() : void
     {
         this.logger.info('[close]')
         this._isClosed = true;
@@ -132,7 +133,7 @@ export class MySqlDriver
         });
     }
 
-    executeSql(sql : string, params? : any[]) : Promise<any[]>
+    executeSql(sql : string, params? : any[]) : Promise<any>
     {
         return Promise.construct<any[]>((resolve, reject) => {
             this.logger.silly("[executeSql] executing: %s", sql);
@@ -146,9 +147,9 @@ export class MySqlDriver
                 return;
             }
             
-            let finalParams = this._massageParams(params);
+            let finalParams = massageParams(params);
 
-            this._connection.execute(sql, finalParams, (err: any, results: any[], fields) => {
+            this._connection.execute(sql, finalParams, (err: any, results: any, fields) => {
                 if (err) {
                     this.logger.error("[executeSql] ERROR IN \"%s\". ", sql, err);
                     reject(err);
@@ -166,26 +167,6 @@ export class MySqlDriver
         return synchronizer;
     }
 
-    _massageParams(params? : any[]) : any[]
-    {
-        if (!params) {
-            params = []
-        } else {
-            params = params.map(x => {
-                if (_.isUndefined(x)) {
-                    return null;
-                }
-                if (_.isPlainObject(x) || _.isArray(x)) {
-                    return _.stableStringify(x);
-                }
-                return x;
-            })
-        }
-        if (this._isDebug) {
-            this.logger.info("[_massageParams] final params: ", params);
-        }
-        return params;
-    }
 
     executeStatements(statementInfos : StatementInfo[]) : Promise<any[]>
     {
@@ -262,7 +243,7 @@ export class MySqlDriver
 
     /** IMPL **/
 
-    _tryConnect()
+    private _tryConnect()
     {
         try
         {
@@ -302,7 +283,7 @@ export class MySqlDriver
         }
     }
 
-    _disconnect()
+    private _disconnect()
     {
         this.logger.info("[_disconnect]");
         if (this._connection) {
@@ -316,7 +297,7 @@ export class MySqlDriver
         this._tryReconnect();
     }
 
-    _acceptConnection(connection : Connection) : Promise<void>
+    private _acceptConnection(connection : Connection) : Promise<void>
     {
         this._connection = connection;
 
@@ -337,7 +318,7 @@ export class MySqlDriver
         ;
     }
 
-    _tryReconnect()
+    private _tryReconnect()
     {
         if (this._isClosed) {
             return;
@@ -345,7 +326,7 @@ export class MySqlDriver
         setTimeout(this._tryConnect.bind(this), 1000);
     }
 
-    _triggerCallback(cb : ConnectCallback)
+    private _triggerCallback(cb : ConnectCallback)
     {
         try
         {
