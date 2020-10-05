@@ -53,16 +53,6 @@ steps:
     commands:
       - npm run build
 
-  test_init:
-    title: Compile
-    stage: test
-    image: 'kubevious/node-builder:12'
-    working_directory: "${{CICD_REPO_PATH}}"
-    commands:
-      - pwd
-      - ls -la
-      - ls -la ./mysql
-
   run_unit_test:
     title: Run Unit Tests
     stage: test
@@ -91,12 +81,7 @@ steps:
       readiness:
         image: mysql:8.0.19
         timeoutSeconds: 90
-        # volumes:
-        #   - '${{CF_VOLUME_NAME}}:${{CF_VOLUME_PATH}}'
         commands:
-          - ls -la /
-          - ls -la ${CICD_REPO_PATH}
-          - ls -la ${CICD_REPO_PATH}/mysql
           - "mysql --host=mysql --user=root --password= sample-db -e \"show databases;\""    
           - "mysql --host=mysql --user=root --password= sample-db < ${CICD_REPO_PATH}/mysql/init.sql"
           - "mysql --host=mysql --user=root --password= sample-db -e \"show tables;\""    
