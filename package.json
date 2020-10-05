@@ -1,7 +1,7 @@
 {
-  "name": "kubevious-helper-mysql",
+  "name": "@kubevious/helper-mysql",
   "version": "1.0.0",
-  "description": "",
+  "description": "MySQL Helper Library",
   "main": "dist/index.js",
   "types": "dist",
   "files": [
@@ -12,19 +12,14 @@
     "build": "tsc",
     "format": "prettier --write ./src/ ./test/",
     "format-check": "prettier --write ./src/ ./test/",
-    "lint": "eslint",
-    "prepare": "npm run build",
-    "prepublishOnly": "npm test && npm run lint",
-    "preversion": "npm run lint",
-    "version": "npm run format && git add -A src",
-    "postversion": "git push && git push --tags"
+    "lint": "eslint"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kubevious/helpers.git"
   },
   "author": "Ruben Hakopian <ruben.hakopian@gmail.com>",
-  "license": "ISC",
+  "license": "Propriatery",
   "bugs": {
     "url": "https://github.com/kubevious/helpers/issues"
   },
