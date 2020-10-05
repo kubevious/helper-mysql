@@ -82,7 +82,7 @@ steps:
         image: mysql:8.0.19
         timeoutSeconds: 90
         volumes:
-          - '${{CICD_REPO_PATH}}/mysql:/my-init-script'
+          - './mysql:/my-init-script'
         commands:
           - "mysql --host=mysql --user=root --password= sample-db -e \"show databases;\""    
           - "mysql --host=mysql --user=root --password= sample-db < /my-init-script/init.sql"
