@@ -2,7 +2,7 @@ version: '3.3'
 services:
 
  helper-mysql:
-  image: 'mysql:8.0.19'
+  image: 'mysql:8.0.22'
   container_name: 'helper-mysql'
   # networks:
     # - kubevious-saas

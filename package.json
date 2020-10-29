@@ -29,7 +29,7 @@
     "mysql2": "^2.1.0",
     "the-lodash": "^2.0.0",
     "the-logger": "^2.0.2",
-    "the-promise": "^2.0.2"
+    "the-promise": "^2.0.3"
   },
   "devDependencies": {
     "@types/mocha": "^8.0.3",

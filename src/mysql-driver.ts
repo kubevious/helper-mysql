@@ -51,7 +51,8 @@ export class MySqlDriver
             database: process.env.MYSQL_DB,
             user: process.env.MYSQL_USER,
             password: process.env.MYSQL_PASS,
-            timezone: 'Z'
+            timezone: 'Z',
+            charset: 'utf8mb4_general_ci'
         });
     }
 
