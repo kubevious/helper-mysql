@@ -259,7 +259,7 @@ export class MySqlDriver
             let connection = createConnection(this._mysqlConnectParams);
 
             connection.on('error', (err : any) => {
-                this.logger.error('[_tryConnect] ON ERROR: %s', err.code);
+                this.logger.error('[_tryConnect] ON ERROR: %s, Message: %s', err.code, err.sqlMessage);
                 connection.destroy();
                 this._disconnect();
             });
