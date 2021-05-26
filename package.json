@@ -27,9 +27,9 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "mysql2": "^2.1.0",
-    "the-lodash": "^2.0.0",
-    "the-logger": "^2.0.5",
-    "the-promise": "^2.0.3"
+    "the-lodash": "^2.0.9",
+    "the-logger": "^2.0.9",
+    "the-promise": "^2.0.13"
   },
   "devDependencies": {
     "@types/mocha": "^8.0.3",

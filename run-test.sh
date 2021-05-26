@@ -9,6 +9,4 @@ export MYSQL_DB=sample-db
 export MYSQL_USER=root
 export MYSQL_PASS=
 
-export TS_NODE_COMPILER_OPTIONS="{\"module\": \"commonjs\" }"
-
-mocha -r ./node_modules/ts-node/register 'test/**/*.ts'
+npm test

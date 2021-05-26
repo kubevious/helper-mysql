@@ -97,7 +97,7 @@ export class MySqlStatement
             });
         }
         this._isPreparing = true;
-        this.logger.info('[prepare] BEGIN: %s', this._sql);
+        this.logger.debug('[prepare] %s', this._sql);
 
         return Promise.construct<void>((resolve, reject) => {
             this._waiters.push({
@@ -116,7 +116,7 @@ export class MySqlStatement
                     return;
                 }
 
-                this.logger.info('[prepare] prepared: %s. inner id: %s', this._sql, statement.id);
+                this.logger.silly('[prepare] Ready: %s. S_ID: %s', this._sql, statement.id);
                 this._isPreparing = false;
                 this._statement = statement;
 
@@ -131,7 +131,15 @@ export class MySqlStatement
 
     private _handlePrepareError(message: string, error : any)
     {
-        this.logger.error('[_handlePrepareError] failed to prepare statement. %s', message, this._sql, error);
+        if (this.isConnected) {
+            this.logger.error('[_handlePrepareError] SQL: %s', this._sql);
+        }
+
+        if (error.message) {
+            this.logger.error('[_handlePrepareError] %s. Reason: %s', message, error.message);
+        } else {
+            this.logger.error('[_handlePrepareError] %s. Reason: ', message, error);
+        }
         this._statement = null;
         this._isPreparing = false;
         for(var x of this._waiters)
