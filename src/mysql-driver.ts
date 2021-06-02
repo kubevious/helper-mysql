@@ -2,7 +2,7 @@ import _ from 'the-lodash';
 import { Promise, Resolvable } from 'the-promise';
 import { ILogger } from 'the-logger'
 import { HandledError } from './handled-error'
-import { createConnection, Connection } from 'mysql2';
+import { createConnection, Connection, ConnectionOptions } from 'mysql2';
 import { EventEmitter } from 'events'
 import { MySqlStatement } from './mysql-statement'
 import { MySqlTableSynchronizer } from './mysql-table-synchronizer'
@@ -33,21 +33,21 @@ export class MySqlDriver
     private _isConnecting = false;
     private _isConnected = false;
     private _connection? : Connection;
-    private _mysqlConnectParams : any;
+    private _mysqlConnectParams : ConnectionOptions;
     private _partitionManager : PartitionManager;
 
-    constructor(logger: ILogger, params : any, isDebug : boolean)
+    constructor(logger: ILogger, params : ConnectionOptions | null, isDebug? : boolean)
     {
         this.logger = logger.sublogger("MySqlDriver");
         this._statements = {};
         this._migrators = [];
-        this._isDebug = isDebug;
+        this._isDebug = isDebug || false;
         this._isClosed = false;
 
         params = params || {}
         params = _.clone(params);
 
-        this._mysqlConnectParams = _.defaults(params, {
+        this._mysqlConnectParams = <ConnectionOptions>_.defaults(params, {
             host: process.env.MYSQL_HOST,
             port: process.env.MYSQL_PORT,
             database: process.env.MYSQL_DB,
@@ -74,6 +74,10 @@ export class MySqlDriver
 
     get partitionManager() {
         return this._partitionManager;
+    }
+
+    get databaseName() {
+        return this._mysqlConnectParams.database;
     }
 
     connect() : void

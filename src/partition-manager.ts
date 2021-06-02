@@ -2,7 +2,6 @@ import _ from 'the-lodash';
 import { ILogger } from 'the-logger'
 
 import { MySqlDriver } from './mysql-driver';
-
 export class PartitionManager
 {
     private _logger : ILogger
@@ -19,7 +18,7 @@ export class PartitionManager
         const sql = 
             "SELECT PARTITION_NAME, PARTITION_DESCRIPTION " +
             "FROM information_schema.partitions " +
-            `WHERE TABLE_SCHEMA='${process.env.MYSQL_DB}' ` +
+            `WHERE TABLE_SCHEMA='${this._driver.databaseName}' ` +
             `AND TABLE_NAME = '${tableName}' ` +
             'AND PARTITION_NAME IS NOT NULL ' +
             'AND PARTITION_DESCRIPTION != 0;';
