@@ -7,6 +7,7 @@ import { EventEmitter } from 'events'
 import { MySqlStatement } from './mysql-statement'
 import { MySqlTableSynchronizer } from './mysql-table-synchronizer'
 import { massageParams } from './utils'
+import { PartitionManager } from './partition-manager';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -33,6 +34,7 @@ export class MySqlDriver
     private _isConnected = false;
     private _connection? : Connection;
     private _mysqlConnectParams : any;
+    private _partitionManager : PartitionManager;
 
     constructor(logger: ILogger, params : any, isDebug : boolean)
     {
@@ -54,6 +56,8 @@ export class MySqlDriver
             timezone: 'Z',
             charset: 'utf8mb4_general_ci'
         });
+
+        this._partitionManager = new PartitionManager(this.logger, this);
     }
 
     get isConnected() : boolean{
@@ -66,6 +70,10 @@ export class MySqlDriver
 
     get connection() : any {
         return this._connection;
+    }
+
+    get partitionManager() {
+        return this._partitionManager;
     }
 
     connect() : void
