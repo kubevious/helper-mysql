@@ -1,6 +1,6 @@
 {
   "name": "@kubevious/helper-mysql",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "MySQL Helper Library",
   "main": "dist/index.js",
   "types": "dist",
