@@ -1,5 +1,5 @@
 import 'mocha';
-import should = require('should');
+import should from 'should';
 import _ from 'the-lodash';
 
 import { setupLogger, LoggerOptions } from 'the-logger';
@@ -13,7 +13,7 @@ function buildTestSuite(isDebug : boolean) {
 describe('mysql-synchronizer', function() {
 
     it('synchronizer-test', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.onMigrate(() => {
             return mysqlDriver.executeSql(
@@ -26,7 +26,7 @@ describe('mysql-synchronizer', function() {
         })
 
         mysqlDriver.connect();
-        var synchronizer = mysqlDriver.synchronizer(logger, 'sync_test', [], ['name', 'msg']);
+        const synchronizer = mysqlDriver.synchronizer(logger, 'sync_test', [], ['name', 'msg']);
 
         return mysqlDriver.waitConnect()
         .then(() => mysqlDriver.executeSql("DELETE FROM sync_test;"))

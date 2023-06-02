@@ -1,5 +1,4 @@
 import _ from 'the-lodash';
-import { Promise, Resolvable } from 'the-promise';
 import { ILogger } from 'the-logger'
 import { HandledError } from './handled-error'
 import { createConnection, Connection, ConnectionOptions } from 'mysql2';
@@ -10,6 +9,7 @@ import { massageParams } from './utils'
 import { PartitionManager } from './partition-manager';
 
 import dotenv from 'dotenv';
+import { MyPromise } from 'the-promise';
 dotenv.config();
 
 export interface StatementInfo 
@@ -18,7 +18,7 @@ export interface StatementInfo
     params: any[];
 }
 
-export type ConnectCallback = ((driver : MySqlDriver) => Resolvable<any>);
+export type ConnectCallback = ((driver : MySqlDriver) => Promise<any> | void);
 export type MigrateCallback = ((driver : MySqlDriver) => Promise<any>);
 export type TxCallback = ((driver : MySqlDriver) => Promise<any>);
 
@@ -109,7 +109,7 @@ export class MySqlDriver
             return Promise.resolve()
         }
 
-        return Promise.construct<void>((resolve, reject) => {
+        return MyPromise.construct<void>((resolve, reject) => {
             this.onConnect(() => {
                 resolve();
             })
@@ -126,7 +126,7 @@ export class MySqlDriver
         if (sql in this._statements) {
             return this._statements[sql];
         }
-        var statement = new MySqlStatement(this.logger, this, sql);
+        const statement = new MySqlStatement(this.logger, this, sql);
         this._statements[sql] = statement;
         return statement;
     }
@@ -134,10 +134,10 @@ export class MySqlDriver
     prepareStatements() : Promise<void>
     {
         this.logger.info('[prepareStatements] begin')
-        var statements = _.values(this._statements).filter(x => !x.isPrepared);
-        return Promise.serial(statements, x => {
+        const statements = _.values(this._statements).filter(x => !x.isPrepared);
+        return MyPromise.serial(statements, x => {
             return x.prepare()
-                .catch(reason => {
+                .catch((reason: any) => {
                     this.logger.error('[prepareStatements] Failed: ', reason);
                 });
         })
@@ -148,7 +148,7 @@ export class MySqlDriver
 
     executeSql(sql : string, params? : any[]) : Promise<any>
     {
-        return Promise.construct<any[]>((resolve, reject) => {
+        return MyPromise.construct<any[]>((resolve, reject) => {
             this.logger.silly("[executeSql] executing: %s", sql);
 
             if (this._isDebug) {
@@ -160,7 +160,7 @@ export class MySqlDriver
                 return;
             }
             
-            let finalParams = massageParams(params);
+            const finalParams = massageParams(params);
 
             this._connection.execute(sql, finalParams, (err: any, results: any, fields) => {
                 if (err) {
@@ -176,7 +176,11 @@ export class MySqlDriver
 
     synchronizer(logger : ILogger, table : string, filterFields : string[], syncFields : string[])
     {
-        var synchronizer = new MySqlTableSynchronizer(logger, this, table, filterFields, syncFields);
+        const synchronizer = new MySqlTableSynchronizer(logger,
+                                                        this,
+                                                        table,
+                                                        filterFields,
+                                                        syncFields);
         return synchronizer;
     }
 
@@ -187,14 +191,14 @@ export class MySqlDriver
 
         if (this._isDebug)
         {
-            return Promise.serial(statementInfos, x => {
+            return MyPromise.serial(statementInfos, x => {
                 this.logger.info("[executeStatements] exec:");
                 return x.statement.execute(x.params);
             });
         }
         else
         {
-            return Promise.parallel(statementInfos, x => {
+            return MyPromise.parallel(statementInfos, x => {
                 return x.statement.execute(x.params);
             });
         }
@@ -209,7 +213,7 @@ export class MySqlDriver
         }
 
         const connection = this._connection!;
-        return Promise.construct<void>((resolve, reject) => {
+        return MyPromise.construct<void>((resolve, reject) => {
             this.logger.info("[executeInTransaction] TX Started.");
 
             if (!connection) {
@@ -217,7 +221,7 @@ export class MySqlDriver
                 return;
             }
 
-            var rollback = (err : any) =>
+            const rollback = (err : any) =>
             {
                 this.logger.error("[executeInTransaction] Rolling Back.");
                 connection.rollback(() => {
@@ -268,7 +272,7 @@ export class MySqlDriver
             }
             this._isConnecting = true;
     
-            let connection = createConnection(this._mysqlConnectParams);
+            const connection = createConnection(this._mysqlConnectParams);
 
             connection.on('error', (err : any) => {
                 this.logger.error('[_tryConnect] ON ERROR: %s, Message: %s', err.code, err.sqlMessage);
@@ -303,7 +307,7 @@ export class MySqlDriver
             this._connection.destroy();
         }
         this._connection = undefined;
-        for(var x of _.values(this._statements))
+        for(const x of _.values(this._statements))
         {
             x.reset();
         }
@@ -315,7 +319,7 @@ export class MySqlDriver
         this._connection = connection;
 
         return Promise.resolve()
-            .then(() => Promise.serial(this._migrators, x => x(this)))
+            .then(() => MyPromise.serial(this._migrators, x => x(this)))
             .then(() => this.prepareStatements())
             .then(() => {
                 this._connectEmitter.emit('connect');
@@ -348,9 +352,9 @@ export class MySqlDriver
             setImmediate(() => {
                 try
                 {
-                    var res = cb(this);
+                    const res = cb(this);
                     return Promise.resolve(res)
-                        .then(() => {})
+                        .then(() => null)
                         .catch(reason => {
                             this.logger.error("[_triggerCallback] Promise Failure: ", reason)
                         })

@@ -1,5 +1,5 @@
 import _ from 'the-lodash';
-import { Promise } from 'the-promise';
+import { MyPromise } from 'the-promise';
 import { ILogger } from 'the-logger'
 import { calculateObjectHashStr } from './hash-utils'
 import { MySqlDriver, StatementInfo } from './mysql-driver'
@@ -50,19 +50,19 @@ export class MySqlTableSynchronizer
 
     _prepareQueryStatement()
     {
-        var whereClause = '';
+        let whereClause = '';
         if (this._filterFields.length > 0)
         {
             whereClause = ' WHERE ' + 
             this._filterFields.map(x => '`' + x + '` = ?').join(' AND ');
         }
 
-        var fields = ['id'];
+        let fields = ['id'];
         fields = _.concat(fields, this._filterFields);
         fields = _.concat(fields, this._syncFields);
         fields = fields.map(x => '`' + x + '`');
 
-        var sql = 'SELECT `id` ' + 
+        const sql = 'SELECT `id` ' + 
             fields.join(', ') +
             ' FROM `' + this._table + '`' +
             whereClause + 
@@ -74,12 +74,12 @@ export class MySqlTableSynchronizer
 
     _prepareCreateStatement()
     {
-        var fields : string[] = [];
+        let fields : string[] = [];
         fields = _.concat(fields, this._filterFields);
         fields = _.concat(fields, this._syncFields);
         fields = fields.map(x => '`' + x + '`');
 
-        var sql = 'INSERT INTO ' + 
+        const sql = 'INSERT INTO ' + 
             '`' + this._table + '` (' +
             fields.join(', ') +
             ') VALUES (' + 
@@ -91,7 +91,7 @@ export class MySqlTableSynchronizer
 
     _prepareDeleteStatement()
     {
-        var sql = 'DELETE FROM ' + 
+        const sql = 'DELETE FROM ' + 
             '`' + this._table + '` ' +
             'WHERE `id` = ?;';
 
@@ -103,10 +103,10 @@ export class MySqlTableSynchronizer
         return this._queryCurrent(filterValues)
             .then(currentItems => {
 
-                var currentItemsDict : Record<string, any> = {}
-                for(var item of currentItems)
+                const currentItemsDict : Record<string, any> = {}
+                for(const item of currentItems)
                 {
-                    var id = item.id;
+                    const id = item.id;
                     delete item.id;
                     currentItemsDict[calculateObjectHashStr(item)] = {
                         id: id,
@@ -114,8 +114,8 @@ export class MySqlTableSynchronizer
                     }
                 }
 
-                var targetItemsDict : Record<string, any> = {}
-                for(let item of items)
+                const targetItemsDict : Record<string, any> = {}
+                for(const item of items)
                 {
                     targetItemsDict[calculateObjectHashStr(item)] = item;
                 }
@@ -129,16 +129,16 @@ export class MySqlTableSynchronizer
 
     _queryCurrent(filterValues : object)
     {
-        var params = this._filterFields.map(x => _.get(filterValues, x));
+        const params = this._filterFields.map(x => _.get(filterValues, x));
         return this._queryStatement!.execute(params)
     }
 
     _productDelta(currentItemsDict : Record<string, any>, targetItemsDict : Record<string, any>) : DeltaAction[]
     {
-        var delta = [];
+        const delta = [];
 
         if (!this._skipDelete) {
-            for(var h of _.keys(currentItemsDict))
+            for(const h of _.keys(currentItemsDict))
             {
                 if (!targetItemsDict[h]) {
                     delta.push(
@@ -148,7 +148,7 @@ export class MySqlTableSynchronizer
             }
         }
 
-        for(var h of _.keys(targetItemsDict))
+        for(const h of _.keys(targetItemsDict))
         {
             if (!currentItemsDict[h]) {
                 delta.push(
@@ -162,9 +162,9 @@ export class MySqlTableSynchronizer
 
     _executeDelta(delta : DeltaAction[])
     {
-        let statements = delta.map(delta => {
-            var statement = null;
-            var params = null;
+        const statements = delta.map(delta => {
+            let statement = null;
+            let params = null;
 
             if (delta.shouldCreate) {
                 statement = this._createStatement;

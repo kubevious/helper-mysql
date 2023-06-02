@@ -1,5 +1,5 @@
 import 'mocha';
-import should = require('should');
+import should from 'should';
 import _ from 'the-lodash';
 
 import { setupLogger, LoggerOptions } from 'the-logger';
@@ -13,17 +13,17 @@ function buildTestSuite(isDebug : boolean) {
 describe('mysql-driver', function() {
 
     it('constructor', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
         mysqlDriver.close();
     });
 
 
     it('connect', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             mysqlDriver.onConnect(() => {
                 resolve();
             })
@@ -35,7 +35,7 @@ describe('mysql-driver', function() {
 
 
     it('execute-sql-1', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
@@ -54,7 +54,7 @@ describe('mysql-driver', function() {
 
 
     it('execute-sql-2', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
@@ -82,11 +82,11 @@ describe('mysql-driver', function() {
     });
 
     it('execute-sql-error', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
-        var returnedError = false;
+        let returnedError = false;
 
         return mysqlDriver.waitConnect()
         .then(() => {
@@ -104,16 +104,16 @@ describe('mysql-driver', function() {
     });
 
     it('prepare-statement-after-connect', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
         return mysqlDriver.waitConnect()
         .then(() => {
 
-            var deleteStatement = mysqlDriver.statement("DELETE FROM contacts;");
-            var insertStatement = mysqlDriver.statement("INSERT INTO contacts(`name`, `email`) VALUES(?, ?);");
-            var selectStatement = mysqlDriver.statement("SELECT * FROM contacts;");
+            const deleteStatement = mysqlDriver.statement("DELETE FROM contacts;");
+            const insertStatement = mysqlDriver.statement("INSERT INTO contacts(`name`, `email`) VALUES(?, ?);");
+            const selectStatement = mysqlDriver.statement("SELECT * FROM contacts;");
 
             return deleteStatement.execute()
                 .then(() => selectStatement.execute())
@@ -139,16 +139,16 @@ describe('mysql-driver', function() {
     });
 
     it('prepare-statement-after-connect-error', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
         return mysqlDriver.waitConnect()
         .then(() => {
 
-            var selectStatement = mysqlDriver.statement("SELECT * FROM contactZ;");
+            const selectStatement = mysqlDriver.statement("SELECT * FROM contactZ;");
 
-            var returedError = false;
+            let returedError = false;
             return selectStatement.execute()
                 .then(() => selectStatement.execute())
                 .catch(reason => {
@@ -165,16 +165,16 @@ describe('mysql-driver', function() {
     });
 
     it('prepare-statement-after-connect-error-2', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
         return mysqlDriver.waitConnect()
         .then(() => {
 
-            var selectStatement = mysqlDriver.statement("SELECT * FROM contactZ;");
+            const selectStatement = mysqlDriver.statement("SELECT * FROM contactZ;");
 
-            var returedError = false;
+            let returedError = false;
             return selectStatement.execute()
                 .then(() => selectStatement.execute())
                 .catch(reason => {
@@ -200,11 +200,11 @@ describe('mysql-driver', function() {
 
 
     it('prepare-statement-no-connect-error', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
-        var selectStatement = mysqlDriver.statement("SELECT * FROM contacts;");
+        const selectStatement = mysqlDriver.statement("SELECT * FROM contacts;");
 
-        var returedError = false;
+        let returedError = false;
         return selectStatement.execute()
             .then(() => selectStatement.execute())
             .catch(reason => {
@@ -221,11 +221,11 @@ describe('mysql-driver', function() {
 
 
     it('prepare-statement-before-connect', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
-        var deleteStatement = mysqlDriver.statement("DELETE FROM contacts;");
-        var insertStatement = mysqlDriver.statement("INSERT INTO contacts(`name`, `email`) VALUES(?, ?);");
-        var selectStatement = mysqlDriver.statement("SELECT * FROM contacts;");
+        const deleteStatement = mysqlDriver.statement("DELETE FROM contacts;");
+        const insertStatement = mysqlDriver.statement("INSERT INTO contacts(`name`, `email`) VALUES(?, ?);");
+        const selectStatement = mysqlDriver.statement("SELECT * FROM contacts;");
             
         mysqlDriver.connect();
         return mysqlDriver.waitConnect()
@@ -255,11 +255,11 @@ describe('mysql-driver', function() {
 
 
     it('prepare-statement-before-connect-error', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
-        var selectStatement = mysqlDriver.statement("SELECT * FROM contactZ;");
+        const selectStatement = mysqlDriver.statement("SELECT * FROM contactZ;");
             
-        var returedError = false;
+        let returedError = false;
         mysqlDriver.connect();
         return mysqlDriver.waitConnect()
             .then(() => {
@@ -280,13 +280,13 @@ describe('mysql-driver', function() {
 
 
     it('prepare-reconnect', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
-        var deleteStatement = mysqlDriver.statement("DELETE FROM contacts;");
-        var insertStatement = mysqlDriver.statement("INSERT INTO contacts(`name`, `email`) VALUES(?, ?);");
-        var selectStatement = mysqlDriver.statement("SELECT * FROM contacts;");
+        const deleteStatement = mysqlDriver.statement("DELETE FROM contacts;");
+        const insertStatement = mysqlDriver.statement("INSERT INTO contacts(`name`, `email`) VALUES(?, ?);");
+        const selectStatement = mysqlDriver.statement("SELECT * FROM contacts;");
             
-        var returedError = false;
+        let returedError = false;
 
         mysqlDriver.connect();
         return mysqlDriver.waitConnect()
@@ -338,7 +338,7 @@ describe('mysql-driver', function() {
 
 
     it('some-cleanup', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.connect();
 
@@ -353,7 +353,7 @@ describe('mysql-driver', function() {
 
 
     it('on-migrate', function() {
-        var mysqlDriver = new MySqlDriver(logger, null, isDebug);
+        const mysqlDriver = new MySqlDriver(logger, null, isDebug);
 
         mysqlDriver.onMigrate(() => {
             return mysqlDriver.executeSql(

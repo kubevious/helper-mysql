@@ -1,5 +1,5 @@
 import _ from 'the-lodash';
-import { Promise } from 'the-promise';
+import { MyPromise } from 'the-promise';
 import { ILogger } from 'the-logger'
 import { HandledError } from './handled-error'
 import { MySqlDriver } from './mysql-driver'
@@ -65,8 +65,8 @@ export class MySqlStatement
             return Promise.reject('NotPrepared.');
         }
 
-        return Promise.construct<any>((resolve, reject) => {
-            let finalParams = massageParams(params);
+        return MyPromise.construct<any>((resolve, reject) => {
+            const finalParams = massageParams(params);
 
             this._statement.execute(finalParams, (err : any, results : any, fields: any) => {
                 if (err) {
@@ -89,7 +89,7 @@ export class MySqlStatement
         }
 
         if (this._isPreparing) {
-            return Promise.construct<void>((resolve, reject) => {
+            return MyPromise.construct<void>((resolve, reject) => {
                 this._waiters.push({
                     resolve,
                     reject
@@ -99,7 +99,7 @@ export class MySqlStatement
         this._isPreparing = true;
         this.logger.debug('[prepare] %s', this._sql);
 
-        return Promise.construct<void>((resolve, reject) => {
+        return MyPromise.construct<void>((resolve, reject) => {
             this._waiters.push({
                 resolve: resolve,
                 reject: reject
@@ -120,7 +120,7 @@ export class MySqlStatement
                 this._isPreparing = false;
                 this._statement = statement;
 
-                for(var x of this._waiters)
+                for(const x of this._waiters)
                 {
                     x.resolve();
                 }
@@ -142,7 +142,7 @@ export class MySqlStatement
         }
         this._statement = null;
         this._isPreparing = false;
-        for(var x of this._waiters)
+        for(const x of this._waiters)
         {
             x.reject(error);
         }
